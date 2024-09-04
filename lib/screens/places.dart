@@ -17,7 +17,7 @@ class PlacesScreen extends ConsumerWidget {
           IconButton(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const AddPlaceScreen(),
+                  builder: (ctx) => const AddPlaceScreen(),
                 ));
               },
               icon: const Icon(Icons.add_a_photo_rounded)),

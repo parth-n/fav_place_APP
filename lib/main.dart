@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:google_fonts/google_fonts.dart';
-import 'package:place_x/screens/places.dart';
 import 'package:place_x/splash_screen.dart';
 
 final colorScheme = ColorScheme.fromSeed(
