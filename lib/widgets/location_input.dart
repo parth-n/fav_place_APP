@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'package:place_x/models/place.dart';
@@ -15,6 +16,7 @@ class LocationInput extends StatefulWidget {
 class _LocationInputState extends State<LocationInput> {
   PlaceLocation? _pickedLocation;
   var _isGettingLocation = false;
+  final apikey = dotenv.env['API_KEY'] ?? '';
 
   String get locationImage {
     if (_pickedLocation == null) {
@@ -22,7 +24,7 @@ class _LocationInputState extends State<LocationInput> {
     }
     final lat = _pickedLocation!.latitude;
     final lng = _pickedLocation!.longitude;
-    return 'https://api.olamaps.io/tiles/v1/styles/default-light-standard/static/$lng,$lat,15/800x600.png?marker=$lng,$lat|red|scale:0.9&api_key=X3iKTjkYue3ebSMkOV1zbHBU3X5MlquQzQYtS6Gi';
+    return 'https://api.olamaps.io/tiles/v1/styles/default-light-standard/static/$lng,$lat,15/800x600.png?marker=$lng,$lat|red|scale:0.9&api_key=$apikey';
   }
 
   void _getCurrentLocation() async {
@@ -61,7 +63,7 @@ class _LocationInputState extends State<LocationInput> {
     }
 
     final url = Uri.parse(
-        'https://api.olamaps.io/places/v1/reverse-geocode?latlng=$lat,$lng&api_key=X3iKTjkYue3ebSMkOV1zbHBU3X5MlquQzQYtS6Gi');
+        'https://api.olamaps.io/places/v1/reverse-geocode?latlng=$lat,$lng&api_key=$apikey');
     final response = await http.get(url);
     final resData = json.decode(response.body);
     final address = resData['results'][0]['formatted_address'];
