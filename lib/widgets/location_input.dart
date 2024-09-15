@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:location/location.dart';
+import 'package:http/http.dart' as http;
+import 'package:place_x/models/place.dart';
 
 class LocationInput extends StatefulWidget {
   const LocationInput({super.key});
@@ -8,60 +13,108 @@ class LocationInput extends StatefulWidget {
 }
 
 class _LocationInputState extends State<LocationInput> {
+  PlaceLocation? _pickedLocation;
+  var _isGettingLocation = false;
+
+  String get locationImage {
+    if (_pickedLocation == null) {
+      return '';
+    }
+    final lat = _pickedLocation!.latitude;
+    final lng = _pickedLocation!.longitude;
+    return 'https://api.olamaps.io/tiles/v1/styles/default-light-standard/static/$lng,$lat,15/800x600.png?marker=$lng,$lat|red|scale:0.9&api_key=X3iKTjkYue3ebSMkOV1zbHBU3X5MlquQzQYtS6Gi';
+  }
+
   void _getCurrentLocation() async {
-    Location location = new Location();
+    Location location = Location();
 
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-    LocationData _locationData;
+    bool serviceEnabled;
+    PermissionStatus permissionGranted;
+    LocationData locationData;
 
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
+    serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
         return;
       }
     }
 
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
+    permissionGranted = await location.hasPermission();
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
         return;
       }
     }
 
-    _locationData = await location.getLocation();
+    setState(() {
+      _isGettingLocation = true;
+    });
+
+    locationData = await location.getLocation();
+    final lat = locationData.latitude;
+    final lng = locationData.longitude;
+
+    if (lat == null || lng == null) {
+      return;
+    }
+
+    final url = Uri.parse(
+        'https://api.olamaps.io/places/v1/reverse-geocode?latlng=$lat,$lng&api_key=X3iKTjkYue3ebSMkOV1zbHBU3X5MlquQzQYtS6Gi');
+    final response = await http.get(url);
+    final resData = json.decode(response.body);
+    final address = resData['results'][0]['formatted_address'];
+
+    setState(() {
+      _pickedLocation = PlaceLocation(
+        latitude: lat,
+        longitude: lng,
+        address: address,
+      );
+      _isGettingLocation = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    Widget previewContent = Text(
+      'No location chosen',
+      textAlign: TextAlign.center,
+      style: Theme.of(context)
+          .textTheme
+          .bodyLarge!
+          .copyWith(color: Theme.of(context).colorScheme.onSurface),
+    );
+    if (_pickedLocation != null) {
+      previewContent = Image.network(locationImage,
+          fit: BoxFit.cover, width: double.infinity, height: double.infinity);
+    }
+
+    if (_isGettingLocation) {
+      previewContent = const CircularProgressIndicator();
+    }
+
     return Column(
       children: [
         Container(
-          alignment: Alignment.center,
-          height: 170,
-          width: double.infinity,
-          decoration: BoxDecoration(
-              border: Border.all(
-                  width: 1,
-                  color:
-                      Theme.of(context).colorScheme.primary.withOpacity(0.2))),
-          child: Text(
-            'No location chosen',
-            textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge!
-                .copyWith(color: Theme.of(context).colorScheme.onSurface),
-          ),
-        ),
+            alignment: Alignment.center,
+            height: 170,
+            width: double.infinity,
+            decoration: BoxDecoration(
+                border: Border.all(
+                    width: 1,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withOpacity(0.2))),
+            child: previewContent),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             TextButton.icon(
                 icon: const Icon(Icons.location_on),
-                onPressed: () {},
+                onPressed: _getCurrentLocation,
                 label: const Text('Get current location')),
             TextButton.icon(
                 icon: const Icon(Icons.map),
