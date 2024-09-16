@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'package:place_x/models/place.dart';
+import 'package:place_x/screens/map.dart';
 
 class LocationInput extends StatefulWidget {
   const LocationInput({super.key, required this.onSelectLocation});
@@ -18,7 +20,7 @@ class LocationInput extends StatefulWidget {
 class _LocationInputState extends State<LocationInput> {
   PlaceLocation? _pickedLocation;
   var _isGettingLocation = false;
-  final apikey = dotenv.env['API_KEY'] ?? '';
+  //final apikey = dotenv.env['API_KEY'] ?? '';
 
   String get locationImage {
     if (_pickedLocation == null) {
@@ -26,7 +28,26 @@ class _LocationInputState extends State<LocationInput> {
     }
     final lat = _pickedLocation!.latitude;
     final lng = _pickedLocation!.longitude;
-    return 'https://api.olamaps.io/tiles/v1/styles/default-light-standard/static/$lng,$lat,15/800x600.png?marker=$lng,$lat|red|scale:0.9&api_key=$apikey';
+    return 'https://maps.googleapis.com/maps/api/staticmap?center=$lat,$lng&zoom=16&size=600x300&maptype=roadmap&markers=color:red%7Clabel:A%7C$lat,$lng&key=AIzaSyBxNXKE-AGJIgtj7RFq29n4Osjad-nbB3U';
+  }
+
+  Future<void> _savePlace(double latitude, double longitude) async {
+    final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latitude,$longitude&key=AIzaSyBxNXKE-AGJIgtj7RFq29n4Osjad-nbB3U');
+    final response = await http.get(url);
+    final resData = json.decode(response.body);
+    final address = resData['results'][0]['formatted_address'];
+
+    setState(() {
+      _pickedLocation = PlaceLocation(
+        latitude: latitude,
+        longitude: longitude,
+        address: address,
+      );
+      _isGettingLocation = false;
+    });
+
+    widget.onSelectLocation(_pickedLocation!);
   }
 
   void _getCurrentLocation() async {
@@ -63,23 +84,18 @@ class _LocationInputState extends State<LocationInput> {
     if (lat == null || lng == null) {
       return;
     }
+    _savePlace(lat, lng);
+  }
 
-    final url = Uri.parse(
-        'https://api.olamaps.io/places/v1/reverse-geocode?latlng=$lat,$lng&api_key=$apikey');
-    final response = await http.get(url);
-    final resData = json.decode(response.body);
-    final address = resData['results'][0]['formatted_address'];
+  void _selectOnMap() async {
+    final pickedLocation = await Navigator.of(context)
+        .push<LatLng>(MaterialPageRoute(builder: (context) => MapsScreen()));
 
-    setState(() {
-      _pickedLocation = PlaceLocation(
-        latitude: lat,
-        longitude: lng,
-        address: address,
-      );
-      _isGettingLocation = false;
-    });
+    if (pickedLocation == null) {
+      return;
+    }
 
-    widget.onSelectLocation(_pickedLocation!);
+    _savePlace(pickedLocation.latitude, pickedLocation.longitude);
   }
 
   @override
@@ -125,7 +141,7 @@ class _LocationInputState extends State<LocationInput> {
             TextButton.icon(
                 icon: const Icon(Icons.map),
                 onPressed: () {},
-                label: const Text('Map'))
+                label: const Text('Select on Map'))
           ],
         )
       ],

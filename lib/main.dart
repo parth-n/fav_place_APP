@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+//import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:place_x/splash_screen.dart';
 
@@ -27,7 +27,7 @@ final theme = ThemeData().copyWith(
 );
 
 void main() async {
-  await dotenv.load(fileName: "windows/.env");
+  //await dotenv.load(fileName: "../windows/.env");
   runApp(
     const ProviderScope(child: MyApp()),
   );

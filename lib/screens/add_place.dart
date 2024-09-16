@@ -56,7 +56,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 hintText: 'Add a title',
               ),
               controller: _titleController,
-              style: TextStyle(color: Theme.of(context).colorScheme.surface),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(
               height: 10,
